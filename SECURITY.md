@@ -88,6 +88,7 @@ Telegram session files (`*.session`) contain authentication tokens and must be p
 
 The application includes:
 - JWT authentication for the channel, message and deduplication endpoints
+- Superuser-only access to the deduplication job and stats endpoints (`/api/v1/deduplication/embeddings/generate`, `/jobs`, `/stats`), which act on every user's data and spend OpenAI credit
 - Superuser-only access to the Telegram login endpoints (`/api/v1/telegram/*`), which drive the server's single shared Telegram session
 - Password hashing with bcrypt
 - CORS configuration

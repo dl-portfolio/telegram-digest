@@ -1,4 +1,9 @@
-"""Deduplication API endpoints."""
+"""Deduplication API endpoints.
+
+The job endpoints and /stats work across every user's messages (and the
+embeddings job spends OpenAI credit), so they are restricted to superusers.
+The message listing endpoints are scoped to the current user's channels.
+"""
 
 from typing import Annotated
 from uuid import UUID
@@ -9,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlmodel import Session, func, select
 
-from app.api.deps import CurrentUser, get_current_user, get_db
+from app.api.deps import CurrentUser, get_current_active_superuser, get_db
 from app.core.config import settings
 from app.models import (
     Channel,
@@ -83,7 +88,7 @@ class DuplicatesResponse(BaseModel):
 @router.post(
     "/embeddings/generate",
     response_model=EmbeddingsJobResponse,
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_active_superuser)],
 )
 async def generate_embeddings_job(
     request: EmbeddingsJobRequest,
@@ -119,7 +124,7 @@ async def generate_embeddings_job(
 @router.post(
     "/jobs",
     response_model=DeduplicationJobResponse,
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_active_superuser)],
 )
 async def create_deduplication_job(
     request: DeduplicationJobRequest,
@@ -150,7 +155,7 @@ async def create_deduplication_job(
 @router.get(
     "/stats",
     response_model=DeduplicationStatsResponse,
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_current_active_superuser)],
 )
 def get_deduplication_stats(
     db: Annotated[Session, Depends(get_db)],

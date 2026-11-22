@@ -113,7 +113,7 @@ All paths are under `/api/v1`.
 | Telegram login (superuser only) | `GET /telegram/status`, `POST /telegram/start`, `POST /telegram/verify`, `POST /telegram/verify-2fa`, `POST /telegram/logout` |
 | Channels | `GET /channels/`, `POST /channels/`, `GET/PATCH/DELETE /channels/{id}`, `POST /channels/{id}/scrape`, `POST /channels/scrape-all` |
 | Messages | `GET /messages/`, `GET /messages/{id}`, `GET /messages/channel/{channel_id}`, `GET /messages/stats/summary` |
-| Deduplication | `POST /deduplication/embeddings/generate`, `POST /deduplication/jobs` (e.g. `{"similarity_threshold": 0.7}`), `GET /deduplication/stats`, `GET /deduplication/messages`, `GET /deduplication/messages/{id}/duplicates` |
+| Deduplication | Superuser only (they act on every user's messages): `POST /deduplication/embeddings/generate`, `POST /deduplication/jobs` (e.g. `{"similarity_threshold": 0.7}`), `GET /deduplication/stats`. Any user (scoped to their channels): `GET /deduplication/messages`, `GET /deduplication/messages/{id}/duplicates` |
 
 The user, login and item endpoints come from the template the project started from (see Credits).
 
