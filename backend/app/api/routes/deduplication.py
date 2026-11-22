@@ -12,7 +12,7 @@ from arq import create_pool
 from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlmodel import Session, func, select
+from sqlmodel import Session, col, func, select
 
 from app.api.deps import CurrentUser, get_current_active_superuser, get_db
 from app.core.config import settings
@@ -26,6 +26,31 @@ from app.models import (
 )
 
 router = APIRouter(prefix="/deduplication", tags=["deduplication"])
+
+
+def _visible_duplicate_counts(
+    db: Session, user_id: UUID, group_ids: list[UUID]
+) -> dict[UUID, int]:
+    """Count each group's non-primary members that are in the user's channels.
+
+    Dedupe groups are built across every user's messages, so a group can hold
+    messages from other users' channels; those must not be counted or shown.
+    """
+    if not group_ids:
+        return {}
+    rows = db.exec(
+        select(DedupeGroupMember.group_id, func.count(col(DedupeGroupMember.id)))
+        .join(DedupeGroup, col(DedupeGroupMember.group_id) == DedupeGroup.id)
+        .join(TelegramMessage, col(DedupeGroupMember.message_id) == TelegramMessage.id)
+        .join(Channel, col(TelegramMessage.channel_id) == Channel.id)
+        .where(
+            Channel.user_id == user_id,
+            col(DedupeGroupMember.group_id).in_(group_ids),
+            DedupeGroupMember.message_id != DedupeGroup.primary_message_id,
+        )
+        .group_by(col(DedupeGroupMember.group_id))
+    ).all()
+    return dict(rows)
 
 
 class EmbeddingsJobRequest(BaseModel):
@@ -231,6 +256,11 @@ def list_deduplicated_messages(
         query.order_by(TelegramMessage.timestamp.desc()).offset(offset).limit(limit)
     ).all()
 
+    # Duplicate counts only include members from the user's own channels
+    duplicate_counts = _visible_duplicate_counts(
+        db, current_user.id, [group.id for _, group in results]
+    )
+
     # Build response objects
     deduplicated_messages = []
     for msg, group in results:
@@ -251,7 +281,7 @@ def list_deduplicated_messages(
                 scraped_at=msg.scraped_at,
                 created_at=msg.created_at,
                 dedupe_group_id=group.id,
-                duplicate_count=group.group_size - 1,  # Exclude primary
+                duplicate_count=duplicate_counts.get(group.id, 0),
                 confidence_score=group.confidence_score,
             )
         )
@@ -324,14 +354,18 @@ def get_message_duplicates(
     if not dedupe_group:
         raise HTTPException(status_code=404, detail="Dedupe group not found")
 
-    # Get all group members (excluding primary)
+    # Get the other group members, limited to the user's own channels: groups
+    # span every user's messages, so other users' members must not leak.
     members = db.exec(
         select(DedupeGroupMember)
+        .join(TelegramMessage, col(DedupeGroupMember.message_id) == TelegramMessage.id)
+        .join(Channel, col(TelegramMessage.channel_id) == Channel.id)
         .where(
             DedupeGroupMember.group_id == dedupe_group.id,
-            DedupeGroupMember.message_id != dedupe_group.primary_message_id,
+            DedupeGroupMember.message_id != message.id,
+            Channel.user_id == current_user.id,
         )
-        .order_by(DedupeGroupMember.similarity_score.desc())
+        .order_by(col(DedupeGroupMember.similarity_score).desc())
     ).all()
 
     # Build response
@@ -351,7 +385,7 @@ def get_message_duplicates(
         scraped_at=message.scraped_at,
         created_at=message.created_at,
         dedupe_group_id=dedupe_group.id,
-        duplicate_count=dedupe_group.group_size - 1,
+        duplicate_count=len(members),
         confidence_score=dedupe_group.confidence_score,
     )
 
