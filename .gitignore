@@ -1,0 +1,58 @@
+# IDEs
+.vscode
+.idea/
+*.swp
+*.swo
+*~
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.session
+*.session-journal
+telegram_sessions/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres-data/
+
+# Testing
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts (email-templates/build is source, so not ignored)
+dist/
+build/
+!backend/app/email-templates/build/
+*.egg

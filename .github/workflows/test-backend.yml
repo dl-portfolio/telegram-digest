@@ -1,0 +1,45 @@
+name: Test Backend
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  workflow_dispatch:
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy values: the app needs them to start, but none of the tests run
+      # here calls the real OpenAI or Telegram APIs.
+      OPENAI_API_KEY: sk-dummy-ci-key
+      TELEGRAM_API_ID: "12345"
+      TELEGRAM_API_HASH: dummy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Create .env from template
+        run: cp .env.example .env
+      - run: docker compose down -v --remove-orphans
+      - run: docker compose up -d db mailcatcher
+      - name: Migrate DB
+        run: uv run --python 3.12 bash scripts/prestart.sh
+        working-directory: backend
+      # tests/integration needs the full stack running on localhost:8000 and
+      # tests/services/test_embeddings.py calls the live OpenAI API, so both
+      # are run by hand (see docs/TESTING-STRATEGY.md).
+      - name: Run tests
+        run: >-
+          uv run --python 3.12 pytest tests
+          --ignore=tests/integration
+          --ignore=tests/services/test_embeddings.py
+        working-directory: backend
+      - run: docker compose down -v --remove-orphans

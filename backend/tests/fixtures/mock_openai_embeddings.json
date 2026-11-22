@@ -1,0 +1,8 @@
+{
+  "embeddings": {
+    "tech_news_1": [0.012, -0.034, 0.056, 0.089],
+    "tech_news_2": [0.015, -0.031, 0.059, 0.092],
+    "weather": [-0.045, 0.023, -0.012, 0.078]
+  },
+  "note": "These are 4-dimensional vectors for testing. Real embeddings are 768-dimensional."
+}

@@ -1,0 +1,42 @@
+{
+  "channel_info": {
+    "ToBeOr_Official": {
+      "id": -1001234567890,
+      "title": "To Be Or Not To Be",
+      "username": "ToBeOr_Official",
+      "participants_count": 50000
+    },
+    "yigal_levin": {
+      "id": -1001987654321,
+      "title": "Yigal Levin",
+      "username": "yigal_levin",
+      "participants_count": 30000
+    }
+  },
+  "messages": [
+    {
+      "id": 1001,
+      "date": "2024-01-15T10:00:00",
+      "text": "Breaking news: Major development in technology sector.",
+      "views": 5000,
+      "forwards": 150,
+      "from_id": 123456
+    },
+    {
+      "id": 1002,
+      "date": "2024-01-15T11:30:00",
+      "text": "Analysis: The latest tech sector developments show significant growth.",
+      "views": 3500,
+      "forwards": 80,
+      "from_id": 123456
+    },
+    {
+      "id": 1003,
+      "date": "2024-01-15T14:20:00",
+      "text": "Weather update: Sunny skies expected tomorrow.",
+      "views": 2000,
+      "forwards": 20,
+      "from_id": 123456
+    }
+  ]
+}
