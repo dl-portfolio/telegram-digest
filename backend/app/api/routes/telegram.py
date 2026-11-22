@@ -1,8 +1,13 @@
-"""Telegram authentication API endpoints."""
+"""Telegram authentication API endpoints.
 
-from fastapi import APIRouter, HTTPException, status
+These endpoints drive the server's single, shared Telegram session (the one
+the worker scrapes with), so they are restricted to superusers.
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from app.api.deps import get_current_active_superuser
 from app.services.telegram_client import (
     Telegram2FARequiredError,
     TelegramAuthError,
@@ -11,7 +16,11 @@ from app.services.telegram_client import (
     telegram_service,
 )
 
-router = APIRouter(prefix="/telegram", tags=["telegram"])
+router = APIRouter(
+    prefix="/telegram",
+    tags=["telegram"],
+    dependencies=[Depends(get_current_active_superuser)],
+)
 
 
 class PhoneRequest(BaseModel):

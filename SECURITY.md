@@ -88,12 +88,11 @@ Telegram session files (`*.session`) contain authentication tokens and must be p
 
 The application includes:
 - JWT authentication for the channel, message and deduplication endpoints
+- Superuser-only access to the Telegram login endpoints (`/api/v1/telegram/*`), which drive the server's single shared Telegram session
 - Password hashing with bcrypt
 - CORS configuration
 - Rate limiting (via Telegram API)
 - Input validation with Pydantic
-
-**Known gap:** the Telegram login endpoints (`/api/v1/telegram/status`, `/start`, `/verify`, `/verify-2fa`, `/logout`) do not require a JWT. They drive the server's single Telegram session, so only run the stack on a trusted local machine or network.
 
 ### Docker Security
 

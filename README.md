@@ -84,14 +84,22 @@ This repository is the predecessor of **[dl-portfolio/telegram-scraper-api](http
    ```
    Interactive API docs: http://localhost:8000/docs
 
-6. **Log in to Telegram** (once; the session is saved to `telegram_sessions/`):
+6. **Get an API token.** Log in as the superuser (`FIRST_SUPERUSER` and its password from `.env`):
    ```bash
-   curl -X POST http://localhost:8000/api/v1/telegram/start  -H 'Content-Type: application/json' -d '{"phone": "+447700900123"}'
-   curl -X POST http://localhost:8000/api/v1/telegram/verify -H 'Content-Type: application/json' -d '{"code": "12345"}'
+   curl -X POST http://localhost:8000/api/v1/login/access-token \
+     -d 'username=<FIRST_SUPERUSER>' -d 'password=<FIRST_SUPERUSER_PASSWORD>'
+   TOKEN=<access_token from the response>
+   ```
+   Every endpoint below except the health check needs `Authorization: Bearer $TOKEN`.
+
+7. **Log in to Telegram** (once; the session is saved to `telegram_sessions/`). These endpoints control the server's single shared Telegram session, so they need a **superuser** token:
+   ```bash
+   curl -X POST http://localhost:8000/api/v1/telegram/start  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"phone": "+447700900123"}'
+   curl -X POST http://localhost:8000/api/v1/telegram/verify -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"code": "12345"}'
    # With two-step verification: POST /api/v1/telegram/verify-2fa with {"password": "..."}
    ```
 
-7. **Add channels, scrape, embed, deduplicate.** Get a token from `POST /api/v1/login/access-token` (form fields `username` and `password`: `FIRST_SUPERUSER` and its password), then call the endpoints below with `Authorization: Bearer <token>`.
+8. **Add channels, scrape, embed, deduplicate** with the endpoints below.
 
 ---
 
@@ -102,7 +110,7 @@ All paths are under `/api/v1`.
 | Area | Endpoints |
 |---|---|
 | Health | `GET /utils/health-check/` |
-| Telegram login | `GET /telegram/status`, `POST /telegram/start`, `POST /telegram/verify`, `POST /telegram/verify-2fa`, `POST /telegram/logout` |
+| Telegram login (superuser only) | `GET /telegram/status`, `POST /telegram/start`, `POST /telegram/verify`, `POST /telegram/verify-2fa`, `POST /telegram/logout` |
 | Channels | `GET /channels/`, `POST /channels/`, `GET/PATCH/DELETE /channels/{id}`, `POST /channels/{id}/scrape`, `POST /channels/scrape-all` |
 | Messages | `GET /messages/`, `GET /messages/{id}`, `GET /messages/channel/{channel_id}`, `GET /messages/stats/summary` |
 | Deduplication | `POST /deduplication/embeddings/generate`, `POST /deduplication/jobs` (e.g. `{"similarity_threshold": 0.7}`), `GET /deduplication/stats`, `GET /deduplication/messages`, `GET /deduplication/messages/{id}/duplicates` |
