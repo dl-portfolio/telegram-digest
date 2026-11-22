@@ -23,7 +23,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Create .env from template
-        run: cp .env.example .env
+        # The template's Telegram API ID is a text placeholder; settings require an integer.
+        run: |
+          cp .env.example .env
+          sed -i 's/^TELEGRAM_API_ID=.*/TELEGRAM_API_ID=12345678/' .env
       - run: docker compose build
       - run: docker compose down -v --remove-orphans
       - run: docker compose up -d --wait backend adminer
