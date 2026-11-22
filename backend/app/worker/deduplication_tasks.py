@@ -173,7 +173,9 @@ async def deduplicate_messages(
                 similarity = cosine_similarity(msg1.embedding, msg2.embedding)
 
                 # Apply temporal proximity boost (Story 2.4)
-                time_diff = abs((msg1.timestamp - msg2.timestamp).total_seconds() / 3600)
+                time_diff = abs(
+                    (msg1.timestamp - msg2.timestamp).total_seconds() / 3600
+                )
                 if time_diff <= TEMPORAL_PROXIMITY_HOURS:
                     similarity += TEMPORAL_BOOST_FACTOR
                     similarity = min(similarity, 1.0)  # Cap at 1.0

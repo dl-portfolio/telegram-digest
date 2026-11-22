@@ -139,7 +139,9 @@ class TestTelegramAuthentication:
 
         with patch.object(telegram_service, "get_client") as mock_get_client:
             mock_client = AsyncMock()
-            mock_client.sign_in = AsyncMock(side_effect=SessionPasswordNeededError(None))
+            mock_client.sign_in = AsyncMock(
+                side_effect=SessionPasswordNeededError(None)
+            )
             mock_get_client.return_value = mock_client
 
             with pytest.raises(Telegram2FARequiredError):
@@ -168,7 +170,9 @@ class TestChannelResolution:
             assert title == "Test Channel"
 
     @pytest.mark.asyncio
-    async def test_resolve_channel_strips_at_sign(self, telegram_service: TelegramService):
+    async def test_resolve_channel_strips_at_sign(
+        self, telegram_service: TelegramService
+    ):
         """Test that @ prefix is stripped from channel identifier."""
         from telethon.tl.types import Channel as TelegramChannel
 
@@ -214,7 +218,9 @@ class TestChannelResolution:
                 await telegram_service.resolve_channel("private_channel")
 
     @pytest.mark.asyncio
-    async def test_resolve_channel_rate_limited(self, telegram_service: TelegramService):
+    async def test_resolve_channel_rate_limited(
+        self, telegram_service: TelegramService
+    ):
         """Test rate limit error during channel resolution."""
         from telethon.errors import FloodWaitError
 
@@ -274,7 +280,9 @@ class TestMessageFetching:
             with patch("app.services.telegram_client.Message", Message):
                 # Collect messages
                 messages = []
-                async for msg in telegram_service.fetch_messages("test_channel", limit=10):
+                async for msg in telegram_service.fetch_messages(
+                    "test_channel", limit=10
+                ):
                     messages.append(msg)
 
             assert len(messages) == 3
@@ -345,7 +353,9 @@ class TestMessageFetching:
 
             with patch("app.services.telegram_client.Message", Message):
                 messages = []
-                async for msg in telegram_service.fetch_messages("test_channel", limit=10):
+                async for msg in telegram_service.fetch_messages(
+                    "test_channel", limit=10
+                ):
                     messages.append(msg)
 
             # Should only get the message with content

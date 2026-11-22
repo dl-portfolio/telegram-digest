@@ -7,7 +7,6 @@ These tests verify the complete channel management flow works in Docker:
 4. Validate all business rules (3 channel limit, duplicates, etc.)
 """
 
-
 import pytest
 import requests
 
@@ -20,11 +19,8 @@ def auth_token():
     """Get authentication token from running Docker environment."""
     response = requests.post(
         f"{BASE_URL}/login/access-token",
-        data={
-            "username": "admin@example.com",
-            "password": "changethis"
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        data={"username": "admin@example.com", "password": "changethis"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     assert response.status_code == 200, f"Auth failed: {response.text}"
     return response.json()["access_token"]
@@ -64,13 +60,11 @@ class TestEpic1ChannelManagement:
         channel_data = {
             "telegram_identifier": "test_integration_channel",
             "name": "Integration Test Channel",
-            "category": "tech"
+            "category": "tech",
         }
 
         response = requests.post(
-            f"{BASE_URL}/channels/",
-            json=channel_data,
-            headers=headers
+            f"{BASE_URL}/channels/", json=channel_data, headers=headers
         )
 
         assert response.status_code == 201, f"Failed to create channel: {response.text}"
@@ -98,7 +92,7 @@ class TestEpic1ChannelManagement:
             response = requests.post(
                 f"{BASE_URL}/channels/",
                 json={"telegram_identifier": f"limit_test_{i}"},
-                headers=headers
+                headers=headers,
             )
             assert response.status_code == 201, f"Failed to create channel {i}"
 
@@ -106,7 +100,7 @@ class TestEpic1ChannelManagement:
         response = requests.post(
             f"{BASE_URL}/channels/",
             json={"telegram_identifier": "limit_test_4"},
-            headers=headers
+            headers=headers,
         )
 
         assert response.status_code == 400
@@ -118,17 +112,13 @@ class TestEpic1ChannelManagement:
 
         # Create first channel
         response = requests.post(
-            f"{BASE_URL}/channels/",
-            json=channel_data,
-            headers=headers
+            f"{BASE_URL}/channels/", json=channel_data, headers=headers
         )
         assert response.status_code == 201
 
         # Try to create duplicate
         response = requests.post(
-            f"{BASE_URL}/channels/",
-            json=channel_data,
-            headers=headers
+            f"{BASE_URL}/channels/", json=channel_data, headers=headers
         )
 
         assert response.status_code == 400
@@ -140,7 +130,7 @@ class TestEpic1ChannelManagement:
         response = requests.post(
             f"{BASE_URL}/channels/",
             json={"telegram_identifier": "update_test", "category": "tech"},
-            headers=headers
+            headers=headers,
         )
         channel_id = response.json()["id"]
 
@@ -148,7 +138,7 @@ class TestEpic1ChannelManagement:
         update_response = requests.patch(
             f"{BASE_URL}/channels/{channel_id}",
             json={"category": "security", "is_active": False},
-            headers=headers
+            headers=headers,
         )
 
         assert update_response.status_code == 200
@@ -162,29 +152,26 @@ class TestEpic1ChannelManagement:
         response = requests.post(
             f"{BASE_URL}/channels/",
             json={"telegram_identifier": "delete_test"},
-            headers=headers
+            headers=headers,
         )
         channel_id = response.json()["id"]
 
         # Delete channel
         delete_response = requests.delete(
-            f"{BASE_URL}/channels/{channel_id}",
-            headers=headers
+            f"{BASE_URL}/channels/{channel_id}", headers=headers
         )
         assert delete_response.status_code == 204
 
         # Verify channel is gone
         get_response = requests.get(
-            f"{BASE_URL}/channels/{channel_id}",
-            headers=headers
+            f"{BASE_URL}/channels/{channel_id}", headers=headers
         )
         assert get_response.status_code == 404
 
     def test_unauthenticated_access_denied(self):
         """Test that unauthenticated requests are rejected."""
         response = requests.post(
-            f"{BASE_URL}/channels/",
-            json={"telegram_identifier": "unauth_test"}
+            f"{BASE_URL}/channels/", json={"telegram_identifier": "unauth_test"}
         )
         assert response.status_code == 401
 

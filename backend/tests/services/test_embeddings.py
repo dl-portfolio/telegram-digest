@@ -111,9 +111,7 @@ class TestOpenAIEmbeddingsProvider:
             await provider.get_embeddings_batch(texts)
 
     @pytest.mark.asyncio
-    async def test_get_embedding_multilingual(
-        self, provider: OpenAIEmbeddingsProvider
-    ):
+    async def test_get_embedding_multilingual(self, provider: OpenAIEmbeddingsProvider):
         """Test embedding generation for Russian text."""
         russian_text = "Это тестовое сообщение на русском языке о машинном обучении"
 

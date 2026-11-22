@@ -177,7 +177,9 @@ class Channel(ChannelBase, table=True):
     """Database model for Telegram channels."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
     telegram_id: int | None = Field(
         default=None,
         description="Telegram's internal channel ID (resolved from identifier)",
@@ -320,9 +322,7 @@ class TelegramMessage(TelegramMessageBase, table=True):
     channel: Channel | None = Relationship(back_populates="messages")
     dedupe_group: "DedupeGroup" = Relationship(
         back_populates="members",
-        sa_relationship_kwargs={
-            "foreign_keys": "[TelegramMessage.dedupe_group_id]"
-        }
+        sa_relationship_kwargs={"foreign_keys": "[TelegramMessage.dedupe_group_id]"},
     )
 
 
@@ -386,9 +386,7 @@ class DedupeGroup(DedupeGroupBase, table=True):
     )
     members: list[TelegramMessage] = Relationship(
         back_populates="dedupe_group",
-        sa_relationship_kwargs={
-            "foreign_keys": "[TelegramMessage.dedupe_group_id]"
-        }
+        sa_relationship_kwargs={"foreign_keys": "[TelegramMessage.dedupe_group_id]"},
     )
     group_members: list["DedupeGroupMember"] = Relationship(
         back_populates="group", cascade_delete=True

@@ -26,10 +26,15 @@ def cleanup_data(db: Session):
 
 
 @pytest.fixture
-def test_channel(db: Session, superuser_token_headers: dict[str, str], client: TestClient) -> Channel:
+def test_channel(
+    db: Session, superuser_token_headers: dict[str, str], client: TestClient
+) -> Channel:
     """Create a test channel for message tests."""
     # Create channel via API to get proper user association
-    data = {"telegram_identifier": "test_messages_channel", "name": "Test Messages Channel"}
+    data = {
+        "telegram_identifier": "test_messages_channel",
+        "name": "Test Messages Channel",
+    }
     r = client.post(
         f"{settings.API_V1_STR}/channels/",
         headers=superuser_token_headers,

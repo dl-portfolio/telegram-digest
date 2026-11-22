@@ -106,7 +106,8 @@ async def scrape_channel(
                 existing = session.exec(
                     select(TelegramMessage).where(
                         TelegramMessage.channel_id == channel.id,
-                        TelegramMessage.telegram_message_id == msg_data["telegram_message_id"],
+                        TelegramMessage.telegram_message_id
+                        == msg_data["telegram_message_id"],
                     )
                 ).first()
 
@@ -139,7 +140,10 @@ async def scrape_channel(
                 messages_fetched += 1
 
                 # Track highest message ID
-                if last_message_id is None or msg_data["telegram_message_id"] > last_message_id:
+                if (
+                    last_message_id is None
+                    or msg_data["telegram_message_id"] > last_message_id
+                ):
                     last_message_id = msg_data["telegram_message_id"]
 
             # Update channel scrape metadata
@@ -220,7 +224,6 @@ async def scrape_all_channels(ctx: dict[str, Any]) -> dict[str, Any]:
 
         # Queue scrape jobs for each channel
         from arq import ArqRedis
-
 
         redis: ArqRedis = ctx.get("redis")
         if not redis:

@@ -24,9 +24,15 @@ def list_messages(
     channel_id: uuid.UUID | None = Query(None, description="Filter by channel ID"),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(50, ge=1, le=200, description="Max records to return"),
-    since: datetime | None = Query(None, description="Get messages after this timestamp"),
-    until: datetime | None = Query(None, description="Get messages before this timestamp"),
-    search: str | None = Query(None, min_length=2, description="Search in message text"),
+    since: datetime | None = Query(
+        None, description="Get messages after this timestamp"
+    ),
+    until: datetime | None = Query(
+        None, description="Get messages before this timestamp"
+    ),
+    search: str | None = Query(
+        None, min_length=2, description="Search in message text"
+    ),
 ) -> TelegramMessagesPublic:
     """List messages with optional filtering and pagination.
 
@@ -71,20 +77,15 @@ def list_messages(
     # Apply search filter
     if search:
         search_pattern = f"%{search}%"
-        base_query = base_query.where(
-            col(TelegramMessage.text).ilike(search_pattern)
-        )
-        count_query = count_query.where(
-            col(TelegramMessage.text).ilike(search_pattern)
-        )
+        base_query = base_query.where(col(TelegramMessage.text).ilike(search_pattern))
+        count_query = count_query.where(col(TelegramMessage.text).ilike(search_pattern))
 
     # Get total count
     count = session.exec(count_query).one()
 
     # Get messages with pagination, ordered by timestamp desc
     statement = (
-        base_query
-        .order_by(col(TelegramMessage.timestamp).desc())
+        base_query.order_by(col(TelegramMessage.timestamp).desc())
         .offset(skip)
         .limit(limit)
     )
@@ -128,7 +129,9 @@ def list_channel_messages(
     current_user: CurrentUser = None,
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(50, ge=1, le=200, description="Max records to return"),
-    since: datetime | None = Query(None, description="Get messages after this timestamp"),
+    since: datetime | None = Query(
+        None, description="Get messages after this timestamp"
+    ),
 ) -> TelegramMessagesPublic:
     """List messages for a specific channel.
 
@@ -149,9 +152,7 @@ def list_channel_messages(
         )
 
     # Build query
-    base_query = select(TelegramMessage).where(
-        TelegramMessage.channel_id == channel_id
-    )
+    base_query = select(TelegramMessage).where(TelegramMessage.channel_id == channel_id)
     count_query = (
         select(func.count())
         .select_from(TelegramMessage)
@@ -168,8 +169,7 @@ def list_channel_messages(
 
     # Get messages with pagination
     statement = (
-        base_query
-        .order_by(col(TelegramMessage.timestamp).desc())
+        base_query.order_by(col(TelegramMessage.timestamp).desc())
         .offset(skip)
         .limit(limit)
     )
@@ -206,13 +206,15 @@ def get_messages_summary(
 
     # Oldest and newest message timestamps
     oldest = session.exec(
-        select(func.min(TelegramMessage.timestamp))
-        .where(col(TelegramMessage.channel_id).in_(user_channels))
+        select(func.min(TelegramMessage.timestamp)).where(
+            col(TelegramMessage.channel_id).in_(user_channels)
+        )
     ).one()
 
     newest = session.exec(
-        select(func.max(TelegramMessage.timestamp))
-        .where(col(TelegramMessage.channel_id).in_(user_channels))
+        select(func.max(TelegramMessage.timestamp)).where(
+            col(TelegramMessage.channel_id).in_(user_channels)
+        )
     ).one()
 
     # Messages per channel

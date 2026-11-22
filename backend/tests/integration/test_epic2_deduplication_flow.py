@@ -10,7 +10,6 @@ These tests verify the complete deduplication pipeline works in Docker:
 CRITICAL: These tests prove the app actually works, not just that unit tests pass.
 """
 
-
 import logging
 
 import pytest
@@ -27,11 +26,8 @@ def auth_token():
     """Get authentication token from running Docker environment."""
     response = requests.post(
         f"{BASE_URL}/login/access-token",
-        data={
-            "username": "admin@example.com",
-            "password": "changethis"
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        data={"username": "admin@example.com", "password": "changethis"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     assert response.status_code == 200, f"Auth failed: {response.text}"
     return response.json()["access_token"]
@@ -58,9 +54,9 @@ def test_channel(headers):
         f"{BASE_URL}/channels/",
         json={
             "telegram_identifier": "dedup_test_channel",
-            "name": "Dedup Test Channel"
+            "name": "Dedup Test Channel",
         },
-        headers=headers
+        headers=headers,
     )
     assert response.status_code == 201
     channel_id = response.json()["id"]
@@ -76,10 +72,7 @@ class TestEpic2DeduplicationPipeline:
 
     def test_deduplication_stats_endpoint(self, headers):
         """Test that deduplication stats endpoint returns valid data."""
-        response = requests.get(
-            f"{BASE_URL}/deduplication/stats",
-            headers=headers
-        )
+        response = requests.get(f"{BASE_URL}/deduplication/stats", headers=headers)
 
         assert response.status_code == 200, f"Stats endpoint failed: {response.text}"
         stats = response.json()
@@ -101,10 +94,7 @@ class TestEpic2DeduplicationPipeline:
     def test_messages_endpoint_pagination(self, headers, test_channel):
         """Test that messages endpoint works with proper user filtering."""
         # First verify endpoint is accessible
-        response = requests.get(
-            f"{BASE_URL}/messages/?limit=10",
-            headers=headers
-        )
+        response = requests.get(f"{BASE_URL}/messages/?limit=10", headers=headers)
 
         assert response.status_code == 200, f"Messages endpoint failed: {response.text}"
         result = response.json()
@@ -118,12 +108,13 @@ class TestEpic2DeduplicationPipeline:
     def test_deduplicated_messages_endpoint(self, headers):
         """Test that deduplicated messages endpoint works without errors."""
         response = requests.get(
-            f"{BASE_URL}/deduplication/messages?limit=10",
-            headers=headers
+            f"{BASE_URL}/deduplication/messages?limit=10", headers=headers
         )
 
         # Should work even with no dedup groups (empty result is valid)
-        assert response.status_code == 200, f"Dedup messages endpoint failed: {response.text}"
+        assert (
+            response.status_code == 200
+        ), f"Dedup messages endpoint failed: {response.text}"
         result = response.json()
 
         # Verify structure
@@ -138,10 +129,13 @@ class TestEpic2DeduplicationPipeline:
         response = requests.post(
             f"{BASE_URL}/deduplication/jobs",
             json={"similarity_threshold": 0.75},
-            headers=headers
+            headers=headers,
         )
 
-        assert response.status_code in [200, 201], f"Job creation failed: {response.text}"
+        assert response.status_code in [
+            200,
+            201,
+        ], f"Job creation failed: {response.text}"
         job = response.json()
 
         # Verify job structure
@@ -151,8 +145,7 @@ class TestEpic2DeduplicationPipeline:
     def test_channel_specific_messages(self, headers, test_channel):
         """Test filtering messages by channel."""
         response = requests.get(
-            f"{BASE_URL}/messages/?channel_id={test_channel}&limit=10",
-            headers=headers
+            f"{BASE_URL}/messages/?channel_id={test_channel}&limit=10", headers=headers
         )
 
         assert response.status_code == 200, f"Channel messages failed: {response.text}"
@@ -175,8 +168,7 @@ class TestEpic2DeduplicationPipeline:
         """
         # Step 1: Get initial stats
         stats_response = requests.get(
-            f"{BASE_URL}/deduplication/stats",
-            headers=headers
+            f"{BASE_URL}/deduplication/stats", headers=headers
         )
         assert stats_response.status_code == 200
         initial_stats = stats_response.json()
@@ -185,8 +177,7 @@ class TestEpic2DeduplicationPipeline:
 
         # Step 2: Verify we have messages
         messages_response = requests.get(
-            f"{BASE_URL}/messages/?limit=5",
-            headers=headers
+            f"{BASE_URL}/messages/?limit=5", headers=headers
         )
         assert messages_response.status_code == 200
         messages = messages_response.json()
@@ -197,12 +188,13 @@ class TestEpic2DeduplicationPipeline:
         if initial_stats["messages_with_embeddings"] > 0:
             # Step 3: Check if dedup has been run
             if initial_stats["dedupe_groups"] == 0:
-                logger.info("No dedup groups yet - deduplication may need to be triggered")
+                logger.info(
+                    "No dedup groups yet - deduplication may need to be triggered"
+                )
 
             # Step 4: Verify deduplicated messages endpoint works
             dedup_response = requests.get(
-                f"{BASE_URL}/deduplication/messages?limit=10",
-                headers=headers
+                f"{BASE_URL}/deduplication/messages?limit=10", headers=headers
             )
             assert dedup_response.status_code == 200
             dedup_result = dedup_response.json()
@@ -216,7 +208,7 @@ class TestEpic2DeduplicationPipeline:
 
                 duplicates_response = requests.get(
                     f"{BASE_URL}/deduplication/messages/{primary_message_id}/duplicates",
-                    headers=headers
+                    headers=headers,
                 )
                 assert duplicates_response.status_code == 200
                 duplicates = duplicates_response.json()
@@ -226,7 +218,9 @@ class TestEpic2DeduplicationPipeline:
                 assert "duplicates" in duplicates
                 assert "group_confidence" in duplicates
 
-                logger.info(f"Found {len(duplicates['duplicates'])} duplicates for message {primary_message_id}")
+                logger.info(
+                    f"Found {len(duplicates['duplicates'])} duplicates for message {primary_message_id}"
+                )
 
     def test_embedding_generation_tracking(self, headers):
         """Test that we can track which messages have embeddings."""
@@ -236,8 +230,9 @@ class TestEpic2DeduplicationPipeline:
         with_embeddings = stats["messages_with_embeddings"]
 
         # Verify counts make sense
-        assert with_embeddings <= total_messages, \
-            "Can't have more embeddings than messages"
+        assert (
+            with_embeddings <= total_messages
+        ), "Can't have more embeddings than messages"
 
         if total_messages > 0:
             embedding_percentage = (with_embeddings / total_messages) * 100
@@ -251,8 +246,7 @@ class TestEpic2ErrorHandling:
         """Test requesting duplicates for non-existent message."""
         fake_id = "00000000-0000-0000-0000-000000000000"
         response = requests.get(
-            f"{BASE_URL}/deduplication/messages/{fake_id}/duplicates",
-            headers=headers
+            f"{BASE_URL}/deduplication/messages/{fake_id}/duplicates", headers=headers
         )
 
         assert response.status_code == 404
@@ -262,7 +256,7 @@ class TestEpic2ErrorHandling:
         response = requests.post(
             f"{BASE_URL}/deduplication/jobs",
             json={"similarity_threshold": 1.5},  # Invalid: > 1.0
-            headers=headers
+            headers=headers,
         )
 
         # Should either reject or clamp the value

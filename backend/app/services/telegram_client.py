@@ -193,11 +193,17 @@ class TelegramService:
             }
         except PhoneCodeExpiredError:
             self._clear_pending_auth()
-            raise TelegramCodeExpiredError("Verification code has expired. Request a new one.")
+            raise TelegramCodeExpiredError(
+                "Verification code has expired. Request a new one."
+            )
         except PhoneCodeInvalidError:
-            raise TelegramCodeInvalidError("Invalid verification code. Please try again.")
+            raise TelegramCodeInvalidError(
+                "Invalid verification code. Please try again."
+            )
         except SessionPasswordNeededError:
-            raise Telegram2FARequiredError("Two-factor authentication is enabled. Password required.")
+            raise Telegram2FARequiredError(
+                "Two-factor authentication is enabled. Password required."
+            )
 
     async def verify_2fa(self, password: str) -> dict[str, str]:
         """Verify 2FA password.
@@ -280,17 +286,13 @@ class TelegramService:
                 )
 
         except (UsernameNotOccupiedError, UsernameInvalidError):
-            raise TelegramChannelNotFoundError(
-                f"Channel '{identifier}' not found"
-            )
+            raise TelegramChannelNotFoundError(f"Channel '{identifier}' not found")
         except ChannelPrivateError:
             raise TelegramChannelAccessError(
                 f"Cannot access private channel '{identifier}'"
             )
         except ChannelInvalidError:
-            raise TelegramChannelNotFoundError(
-                f"Channel '{identifier}' is invalid"
-            )
+            raise TelegramChannelNotFoundError(f"Channel '{identifier}' is invalid")
         except FloodWaitError as e:
             raise TelegramRateLimitError(
                 f"Rate limited. Please wait {e.seconds} seconds.",
@@ -438,17 +440,24 @@ class TelegramService:
             reaction = result.reaction
             # Handle different reaction types
             if hasattr(reaction, "emoticon"):
-                reaction_data.append({
-                    "emoticon": reaction.emoticon,
-                    "count": result.count,
-                })
+                reaction_data.append(
+                    {
+                        "emoticon": reaction.emoticon,
+                        "count": result.count,
+                    }
+                )
             elif hasattr(reaction, "document_id"):
-                reaction_data.append({
-                    "custom_emoji_id": reaction.document_id,
-                    "count": result.count,
-                })
+                reaction_data.append(
+                    {
+                        "custom_emoji_id": reaction.document_id,
+                        "count": result.count,
+                    }
+                )
 
-        return {"reactions": reaction_data, "total": sum(r["count"] for r in reaction_data)}
+        return {
+            "reactions": reaction_data,
+            "total": sum(r["count"] for r in reaction_data),
+        }
 
 
 # Singleton instance

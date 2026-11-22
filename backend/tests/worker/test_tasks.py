@@ -174,9 +174,11 @@ class TestScrapeChannel:
             assert test_channel.last_scraped_message_id == 1002
 
             # Verify messages were stored
-            messages = db.query(TelegramMessage).filter(
-                TelegramMessage.channel_id == test_channel.id
-            ).all()
+            messages = (
+                db.query(TelegramMessage)
+                .filter(TelegramMessage.channel_id == test_channel.id)
+                .all()
+            )
             assert len(messages) == 2
 
     @pytest.mark.asyncio
@@ -236,6 +238,7 @@ class TestScrapeChannel:
         db.commit()
 
         with patch("app.worker.tasks.telegram_service") as mock_service:
+
             async def mock_fetch(*_args, **_kwargs):
                 yield {
                     "telegram_message_id": 1001,
@@ -258,9 +261,11 @@ class TestScrapeChannel:
             assert result["messages_fetched"] == 1
 
             # Verify only one message exists (updated, not duplicated)
-            messages = db.query(TelegramMessage).filter(
-                TelegramMessage.channel_id == test_channel.id
-            ).all()
+            messages = (
+                db.query(TelegramMessage)
+                .filter(TelegramMessage.channel_id == test_channel.id)
+                .all()
+            )
             assert len(messages) == 1
             assert messages[0].text == "Updated text"
             assert messages[0].view_count == 100
@@ -364,9 +369,7 @@ class TestIntegrationFlow:
     """Test the full scraping integration flow."""
 
     @pytest.mark.asyncio
-    async def test_full_scrape_flow(
-        self, mock_ctx, db: Session, test_channel: Channel
-    ):
+    async def test_full_scrape_flow(self, mock_ctx, db: Session, test_channel: Channel):
         """Test complete flow from channel to stored messages."""
         with patch("app.worker.tasks.telegram_service") as mock_service:
             # Mock successful channel resolution
@@ -408,7 +411,10 @@ class TestIntegrationFlow:
                     "view_count": 2000,
                     "forward_count": 100,
                     "reactions_json": None,
-                    "media_metadata_json": {"type": "document", "mime_type": "application/pdf"},
+                    "media_metadata_json": {
+                        "type": "document",
+                        "mime_type": "application/pdf",
+                    },
                 },
                 {
                     "telegram_message_id": 5003,
@@ -419,7 +425,10 @@ class TestIntegrationFlow:
                     "author_username": None,
                     "view_count": 500,
                     "forward_count": 20,
-                    "reactions_json": {"reactions": [{"emoticon": "👍", "count": 10}], "total": 10},
+                    "reactions_json": {
+                        "reactions": [{"emoticon": "👍", "count": 10}],
+                        "total": 10,
+                    },
                     "media_metadata_json": None,
                 },
             ]
