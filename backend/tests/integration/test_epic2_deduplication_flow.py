@@ -10,16 +10,16 @@ These tests verify the complete deduplication pipeline works in Docker:
 CRITICAL: These tests prove the app actually works, not just that unit tests pass.
 """
 
+
+import logging
+
 import pytest
 import requests
-import time
-from unittest.mock import patch, MagicMock
-
-from app.models import TelegramMessage, DedupeGroup
-
 
 # Docker API base URL
 BASE_URL = "http://localhost:8000/api/v1"
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
@@ -96,7 +96,7 @@ class TestEpic2DeduplicationPipeline:
         assert isinstance(stats["messages_with_embeddings"], int)
         assert isinstance(stats["dedupe_groups"], int)
         assert isinstance(stats["deduplicated_messages"], int)
-        assert isinstance(stats["deduplication_ratio"], (int, float))
+        assert isinstance(stats["deduplication_ratio"], int | float)
 
     def test_messages_endpoint_pagination(self, headers, test_channel):
         """Test that messages endpoint works with proper user filtering."""
@@ -181,7 +181,7 @@ class TestEpic2DeduplicationPipeline:
         assert stats_response.status_code == 200
         initial_stats = stats_response.json()
 
-        print(f"\nInitial stats: {initial_stats}")
+        logger.info(f"\nInitial stats: {initial_stats}")
 
         # Step 2: Verify we have messages
         messages_response = requests.get(
@@ -191,13 +191,13 @@ class TestEpic2DeduplicationPipeline:
         assert messages_response.status_code == 200
         messages = messages_response.json()
 
-        print(f"Sample messages count: {messages['count']}")
+        logger.info(f"Sample messages count: {messages['count']}")
 
         # If we have messages and embeddings, verify dedup works
         if initial_stats["messages_with_embeddings"] > 0:
             # Step 3: Check if dedup has been run
             if initial_stats["dedupe_groups"] == 0:
-                print("No dedup groups yet - deduplication may need to be triggered")
+                logger.info("No dedup groups yet - deduplication may need to be triggered")
 
             # Step 4: Verify deduplicated messages endpoint works
             dedup_response = requests.get(
@@ -207,8 +207,8 @@ class TestEpic2DeduplicationPipeline:
             assert dedup_response.status_code == 200
             dedup_result = dedup_response.json()
 
-            print(f"Deduplicated messages: {dedup_result['count']}")
-            print(f"Deduplication ratio: {dedup_result['deduplication_ratio']}")
+            logger.info(f"Deduplicated messages: {dedup_result['count']}")
+            logger.info(f"Deduplication ratio: {dedup_result['deduplication_ratio']}")
 
             # Step 5: If we have dedup groups, test the duplicates endpoint
             if dedup_result["count"] > 0:
@@ -226,7 +226,7 @@ class TestEpic2DeduplicationPipeline:
                 assert "duplicates" in duplicates
                 assert "group_confidence" in duplicates
 
-                print(f"Found {len(duplicates['duplicates'])} duplicates for message {primary_message_id}")
+                logger.info(f"Found {len(duplicates['duplicates'])} duplicates for message {primary_message_id}")
 
     def test_embedding_generation_tracking(self, headers):
         """Test that we can track which messages have embeddings."""
@@ -241,7 +241,7 @@ class TestEpic2DeduplicationPipeline:
 
         if total_messages > 0:
             embedding_percentage = (with_embeddings / total_messages) * 100
-            print(f"\nEmbedding coverage: {embedding_percentage:.1f}%")
+            logger.info(f"\nEmbedding coverage: {embedding_percentage:.1f}%")
 
 
 class TestEpic2ErrorHandling:

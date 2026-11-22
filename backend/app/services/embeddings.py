@@ -1,6 +1,5 @@
 """Embeddings service with provider abstraction for future Ollama support."""
 
-from abc import ABC, abstractmethod
 from typing import Protocol
 
 import structlog
@@ -173,7 +172,7 @@ class OpenAIEmbeddingsProvider:
             embeddings = [item.embedding for item in response.data]
 
             # Cache results
-            for text, embedding in zip(valid_texts, embeddings):
+            for text, embedding in zip(valid_texts, embeddings, strict=True):
                 cache_key = text[:200]
                 self._embedding_cache[cache_key] = embedding
 

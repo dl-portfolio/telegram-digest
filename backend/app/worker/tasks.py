@@ -6,7 +6,7 @@ from uuid import UUID
 
 import structlog
 from arq import Retry
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.core.db import engine
 from app.models import Channel, TelegramMessage
@@ -26,7 +26,9 @@ DEFAULT_MESSAGE_LIMIT = 100
 MAX_RATE_LIMIT_WAIT = 900  # 15 minutes
 
 
-async def health_check(ctx: dict[str, Any]) -> dict[str, str]:
+# arq's cron() is typed against the WorkerCoroutine protocol, whose first
+# parameter is named `ctx`, so the name has to stay even though it is unused.
+async def health_check(ctx: dict[str, Any]) -> dict[str, str]:  # noqa: ARG001
     """
     Health check task to verify worker is running.
 
@@ -38,7 +40,7 @@ async def health_check(ctx: dict[str, Any]) -> dict[str, str]:
 
 
 async def scrape_channel(
-    ctx: dict[str, Any],
+    _ctx: dict[str, Any],
     channel_id: str,
     limit: int = DEFAULT_MESSAGE_LIMIT,
 ) -> dict[str, Any]:
@@ -46,7 +48,7 @@ async def scrape_channel(
     Scrape messages from a Telegram channel.
 
     Args:
-        ctx: ARQ context
+        _ctx: ARQ context (unused)
         channel_id: UUID of the channel to scrape (as string)
         limit: Maximum number of messages to fetch
 
@@ -209,7 +211,7 @@ async def scrape_all_channels(ctx: dict[str, Any]) -> dict[str, Any]:
     with Session(engine) as session:
         # Get all active channels
         channels = session.exec(
-            select(Channel).where(Channel.is_active == True)
+            select(Channel).where(col(Channel.is_active).is_(True))
         ).all()
 
         if not channels:
@@ -218,7 +220,7 @@ async def scrape_all_channels(ctx: dict[str, Any]) -> dict[str, Any]:
 
         # Queue scrape jobs for each channel
         from arq import ArqRedis
-        from app.core.config import settings
+
 
         redis: ArqRedis = ctx.get("redis")
         if not redis:

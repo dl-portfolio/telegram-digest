@@ -3,10 +3,10 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from pydantic import EmailStr
-from sqlmodel import Column, Field, Relationship, SQLModel
-from sqlalchemy import JSON, BigInteger
 from pgvector.sqlalchemy import Vector
+from pydantic import EmailStr
+from sqlalchemy import JSON, BigInteger
+from sqlmodel import Column, Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from app.models import DedupeGroup

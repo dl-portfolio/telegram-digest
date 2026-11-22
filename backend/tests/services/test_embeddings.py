@@ -1,11 +1,9 @@
 """Tests for embeddings service."""
 
 import pytest
-from openai import RateLimitError
 
 from app.services.embeddings import (
     EmbeddingsError,
-    EmbeddingsRateLimitError,
     OpenAIEmbeddingsProvider,
     get_embeddings_provider,
 )
@@ -170,7 +168,7 @@ class TestEmbeddingsSimilarity:
         emb2 = await provider.get_embedding(text2)
 
         # Cosine similarity
-        dot_product = sum(a * b for a, b in zip(emb1, emb2))
+        dot_product = sum(a * b for a, b in zip(emb1, emb2, strict=True))
         magnitude1 = sum(a * a for a in emb1) ** 0.5
         magnitude2 = sum(b * b for b in emb2) ** 0.5
         similarity = dot_product / (magnitude1 * magnitude2)
@@ -190,7 +188,7 @@ class TestEmbeddingsSimilarity:
         emb2 = await provider.get_embedding(text2)
 
         # Cosine similarity
-        dot_product = sum(a * b for a, b in zip(emb1, emb2))
+        dot_product = sum(a * b for a, b in zip(emb1, emb2, strict=True))
         magnitude1 = sum(a * a for a in emb1) ** 0.5
         magnitude2 = sum(b * b for b in emb2) ** 0.5
         similarity = dot_product / (magnitude1 * magnitude2)

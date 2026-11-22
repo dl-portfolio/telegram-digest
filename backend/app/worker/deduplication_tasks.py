@@ -1,21 +1,21 @@
 """ARQ tasks for semantic deduplication pipeline."""
 
-from datetime import datetime, timedelta
+import math
+from datetime import datetime
 from typing import Any
 from uuid import UUID
-import math
 
 import structlog
 from arq import Retry
-from sqlmodel import Session, select, func, or_
+from sqlmodel import Session, select
 
 from app.core.db import engine
 from app.models import (
-    TelegramMessage,
     DedupeGroup,
     DedupeGroupMember,
+    TelegramMessage,
 )
-from app.services.embeddings import embeddings_service, EmbeddingsError
+from app.services.embeddings import EmbeddingsError, embeddings_service
 
 log = structlog.get_logger()
 
@@ -40,7 +40,7 @@ def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
     if len(vec1) != len(vec2):
         raise ValueError("Vectors must have same dimensions")
 
-    dot_product = sum(a * b for a, b in zip(vec1, vec2))
+    dot_product = sum(a * b for a, b in zip(vec1, vec2, strict=True))
     magnitude1 = math.sqrt(sum(a * a for a in vec1))
     magnitude2 = math.sqrt(sum(b * b for b in vec2))
 
@@ -51,14 +51,14 @@ def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
 
 
 async def generate_embeddings(
-    ctx: dict[str, Any],
+    _ctx: dict[str, Any],
     batch_size: int = 50,
 ) -> dict[str, Any]:
     """
     Generate embeddings for messages without them.
 
     Args:
-        ctx: ARQ context
+        _ctx: ARQ context (unused)
         batch_size: Number of messages to process per batch
 
     Returns:
@@ -90,7 +90,7 @@ async def generate_embeddings(
             embeddings = await embeddings_service.get_embeddings_batch(texts)
 
             # Update messages with embeddings
-            for msg, embedding in zip(messages, embeddings):
+            for msg, embedding in zip(messages, embeddings, strict=True):
                 msg.embedding = embedding
                 msg.embedding_generated_at = datetime.utcnow()
                 msg.embedding_model = "text-embedding-3-small"
@@ -114,7 +114,7 @@ async def generate_embeddings(
 
 
 async def deduplicate_messages(
-    ctx: dict[str, Any],
+    _ctx: dict[str, Any],
     similarity_threshold: float = DEFAULT_SIMILARITY_THRESHOLD,
     channel_ids: list[str] | None = None,
 ) -> dict[str, Any]:
@@ -122,7 +122,7 @@ async def deduplicate_messages(
     Detect semantically similar messages and create dedupe groups.
 
     Args:
-        ctx: ARQ context
+        _ctx: ARQ context (unused)
         similarity_threshold: Minimum similarity score to group messages (default 0.85)
         channel_ids: Optional list of channel UUIDs to filter by
 
@@ -221,7 +221,7 @@ async def deduplicate_messages(
                         (msg.timestamp - primary_msg.timestamp).total_seconds() / 3600
                     )
                     channel_count = len(
-                        set(m.channel_id for m in all_messages)
+                        {m.channel_id for m in all_messages}
                     )  # Unique channels
 
                     explanation_parts = [

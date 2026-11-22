@@ -263,7 +263,7 @@ class TestMessageFetching:
                 mock_messages.append(msg)
 
             # Mock iter_messages as async generator
-            async def mock_iter_messages(*args, **kwargs):
+            async def mock_iter_messages(*_args, **_kwargs):
                 for msg in mock_messages:
                     yield msg
 
@@ -292,7 +292,7 @@ class TestMessageFetching:
 
             captured_kwargs = {}
 
-            async def mock_iter_messages(*args, **kwargs):
+            async def mock_iter_messages(*_args, **kwargs):
                 captured_kwargs.update(kwargs)
                 return
                 yield  # Make it an async generator
@@ -336,7 +336,7 @@ class TestMessageFetching:
             empty_msg.text = None  # No text
             empty_msg.media = None  # No media
 
-            async def mock_iter_messages(*args, **kwargs):
+            async def mock_iter_messages(*_args, **_kwargs):
                 yield normal_msg
                 yield empty_msg
 

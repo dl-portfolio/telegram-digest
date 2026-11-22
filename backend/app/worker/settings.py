@@ -8,8 +8,8 @@ from arq import cron
 from arq.connections import RedisSettings
 
 from app.core.config import settings
-from app.worker.tasks import health_check, scrape_channel, scrape_all_channels
-from app.worker.deduplication_tasks import generate_embeddings, deduplicate_messages
+from app.worker.deduplication_tasks import deduplicate_messages, generate_embeddings
+from app.worker.tasks import health_check, scrape_all_channels, scrape_channel
 
 # Configure structlog for worker
 structlog.configure(

@@ -85,7 +85,7 @@ Tests:
 
 **Epic 2: Full Pipeline Validation**
 ```bash
-docker-compose exec backend pytest tests/integration/test_epic2_full_pipeline.py -v -s
+docker-compose exec backend pytest tests/integration/test_epic2_full_pipeline.py -v --log-cli-level=INFO
 ```
 
 Tests (requires real data):
@@ -143,7 +143,7 @@ bash /tmp/show-real-similarity-with-text.sh
 
 ### Step 4: Run Full Pipeline Test
 ```bash
-docker-compose exec backend pytest tests/integration/test_epic2_full_pipeline.py -v -s
+docker-compose exec backend pytest tests/integration/test_epic2_full_pipeline.py -v --log-cli-level=INFO
 ```
 
 **Expected:** All 7 steps pass

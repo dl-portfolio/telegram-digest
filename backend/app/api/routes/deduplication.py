@@ -3,26 +3,22 @@
 from typing import Annotated
 from uuid import UUID
 
+from arq import create_pool
+from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlmodel import Session, select, func
+from sqlmodel import Session, func, select
 
-from app.api.deps import CurrentUser, get_db
+from app.api.deps import CurrentUser, get_current_user, get_db
+from app.core.config import settings
 from app.models import (
-    TelegramMessage,
     Channel,
     DedupeGroup,
     DedupeGroupMember,
-    DeduplicatedMessagePublic,
     DedupeGroupMemberPublic,
+    DeduplicatedMessagePublic,
+    TelegramMessage,
 )
-from app.worker.deduplication_tasks import (
-    generate_embeddings,
-    deduplicate_messages,
-)
-from arq import create_pool
-from arq.connections import RedisSettings
-from app.core.config import settings
 
 router = APIRouter(prefix="/deduplication", tags=["deduplication"])
 
@@ -84,10 +80,13 @@ class DuplicatesResponse(BaseModel):
     group_confidence: float
 
 
-@router.post("/embeddings/generate", response_model=EmbeddingsJobResponse)
+@router.post(
+    "/embeddings/generate",
+    response_model=EmbeddingsJobResponse,
+    dependencies=[Depends(get_current_user)],
+)
 async def generate_embeddings_job(
     request: EmbeddingsJobRequest,
-    current_user: CurrentUser,
 ) -> EmbeddingsJobResponse:
     """
     Queue job to generate embeddings for messages without them.
@@ -117,10 +116,13 @@ async def generate_embeddings_job(
     )
 
 
-@router.post("/jobs", response_model=DeduplicationJobResponse)
+@router.post(
+    "/jobs",
+    response_model=DeduplicationJobResponse,
+    dependencies=[Depends(get_current_user)],
+)
 async def create_deduplication_job(
     request: DeduplicationJobRequest,
-    current_user: CurrentUser,
 ) -> DeduplicationJobResponse:
     """
     Queue job to deduplicate messages using semantic similarity.
@@ -145,9 +147,12 @@ async def create_deduplication_job(
     )
 
 
-@router.get("/stats", response_model=DeduplicationStatsResponse)
+@router.get(
+    "/stats",
+    response_model=DeduplicationStatsResponse,
+    dependencies=[Depends(get_current_user)],
+)
 def get_deduplication_stats(
-    current_user: CurrentUser,
     db: Annotated[Session, Depends(get_db)],
 ) -> DeduplicationStatsResponse:
     """Get deduplication statistics."""

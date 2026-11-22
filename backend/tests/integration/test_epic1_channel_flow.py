@@ -7,13 +7,9 @@ These tests verify the complete channel management flow works in Docker:
 4. Validate all business rules (3 channel limit, duplicates, etc.)
 """
 
+
 import pytest
 import requests
-import time
-from sqlmodel import Session, select
-
-from app.models import Channel
-
 
 # Docker API base URL
 BASE_URL = "http://localhost:8000/api/v1"

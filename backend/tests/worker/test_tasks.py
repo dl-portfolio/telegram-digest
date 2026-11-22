@@ -13,9 +13,8 @@ from app.core.config import settings
 from app.models import Channel, TelegramMessage, User
 from app.worker.tasks import (
     health_check,
-    scrape_channel,
     scrape_all_channels,
-    DEFAULT_MESSAGE_LIMIT,
+    scrape_channel,
 )
 
 
@@ -156,7 +155,7 @@ class TestScrapeChannel:
                 },
             ]
 
-            async def mock_fetch(*args, **kwargs):
+            async def mock_fetch(*_args, **_kwargs):
                 for msg in test_messages:
                     yield msg
 
@@ -194,7 +193,7 @@ class TestScrapeChannel:
         with patch("app.worker.tasks.telegram_service") as mock_service:
             captured_min_id = None
 
-            async def mock_fetch(identifier, min_id=None, limit=100):
+            async def mock_fetch(_identifier, min_id=None, **_kwargs):
                 nonlocal captured_min_id
                 captured_min_id = min_id
                 yield {
@@ -237,7 +236,7 @@ class TestScrapeChannel:
         db.commit()
 
         with patch("app.worker.tasks.telegram_service") as mock_service:
-            async def mock_fetch(*args, **kwargs):
+            async def mock_fetch(*_args, **_kwargs):
                 yield {
                     "telegram_message_id": 1001,
                     "text": "Updated text",
@@ -425,7 +424,7 @@ class TestIntegrationFlow:
                 },
             ]
 
-            async def mock_fetch(*args, **kwargs):
+            async def mock_fetch(*_args, **_kwargs):
                 for msg in test_messages:
                     yield msg
 

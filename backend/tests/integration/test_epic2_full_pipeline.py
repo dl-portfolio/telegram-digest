@@ -10,11 +10,14 @@ This test verifies the ENTIRE deduplication workflow with REAL data:
 This proves the application ACTUALLY WORKS, not just that tests pass.
 """
 
+import logging
+
 import pytest
 import requests
 
-
 BASE_URL = "http://localhost:8000/api/v1"
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
@@ -46,7 +49,7 @@ class TestFullDeduplicationPipeline:
         channels = response.json()["data"]
         channel_ids = {ch["telegram_identifier"] for ch in channels}
 
-        print(f"\nFound {len(channels)} channels: {channel_ids}")
+        logger.info(f"\nFound {len(channels)} channels: {channel_ids}")
 
         # We need at least the test channels
         assert len(channels) >= 2, f"Expected at least 2 channels, found {len(channels)}"
@@ -59,13 +62,13 @@ class TestFullDeduplicationPipeline:
         stats = stats_response.json()
         total_messages = stats["total_messages"]
 
-        print(f"\nTotal messages in database: {total_messages}")
+        logger.info(f"\nTotal messages in database: {total_messages}")
 
         # We should have scraped messages
         assert total_messages > 0, \
             "❌ FAILED: No messages in database. Scraping didn't work or data was cleared."
 
-        print(f"✅ SUCCESS: {total_messages} messages scraped")
+        logger.info(f"✅ SUCCESS: {total_messages} messages scraped")
 
     def test_step3_embeddings_generated(self, headers):
         """Verify embeddings were generated for messages."""
@@ -75,7 +78,7 @@ class TestFullDeduplicationPipeline:
         total_messages = stats["total_messages"]
         with_embeddings = stats["messages_with_embeddings"]
 
-        print(f"\nMessages with embeddings: {with_embeddings}/{total_messages}")
+        logger.info(f"\nMessages with embeddings: {with_embeddings}/{total_messages}")
 
         # We should have embeddings
         assert with_embeddings > 0, \
@@ -84,12 +87,12 @@ class TestFullDeduplicationPipeline:
         # Calculate coverage
         if total_messages > 0:
             coverage = (with_embeddings / total_messages) * 100
-            print(f"Embedding coverage: {coverage:.1f}%")
+            logger.info(f"Embedding coverage: {coverage:.1f}%")
 
             assert coverage > 50, \
                 f"❌ FAILED: Only {coverage:.1f}% embedding coverage. Should be >50%"
 
-        print(f"✅ SUCCESS: {with_embeddings} embeddings generated")
+        logger.info(f"✅ SUCCESS: {with_embeddings} embeddings generated")
 
     def test_step4_deduplication_ran(self, headers):
         """Verify deduplication analysis was performed."""
@@ -99,9 +102,9 @@ class TestFullDeduplicationPipeline:
         dedupe_groups = stats["dedupe_groups"]
         deduplicated_messages = stats["deduplicated_messages"]
 
-        print(f"\nDeduplication results:")
-        print(f"  Groups: {dedupe_groups}")
-        print(f"  Deduplicated messages: {deduplicated_messages}")
+        logger.info("\nDeduplication results:")
+        logger.info(f"  Groups: {dedupe_groups}")
+        logger.info(f"  Deduplicated messages: {deduplicated_messages}")
 
         # We should have found some duplicates
         assert dedupe_groups > 0, \
@@ -110,7 +113,7 @@ class TestFullDeduplicationPipeline:
         assert deduplicated_messages > 0, \
             "❌ FAILED: No deduplicated messages. Deduplication logic broken."
 
-        print(f"✅ SUCCESS: Found {dedupe_groups} groups with {deduplicated_messages} deduplicated messages")
+        logger.info(f"✅ SUCCESS: Found {dedupe_groups} groups with {deduplicated_messages} deduplicated messages")
 
     def test_step5_deduplicated_messages_accessible(self, headers):
         """Verify we can retrieve deduplicated messages via API."""
@@ -125,7 +128,7 @@ class TestFullDeduplicationPipeline:
         result = response.json()
         message_count = result["count"]
 
-        print(f"\nDeduplicated messages returned by API: {message_count}")
+        logger.info(f"\nDeduplicated messages returned by API: {message_count}")
 
         assert message_count > 0, \
             "❌ FAILED: API returns 0 deduplicated messages even though stats show they exist"
@@ -139,7 +142,7 @@ class TestFullDeduplicationPipeline:
             assert msg["duplicate_count"] > 0, \
                 "Primary message should have duplicate_count > 0"
 
-        print(f"✅ SUCCESS: API returns {message_count} deduplicated messages with correct structure")
+        logger.info(f"✅ SUCCESS: API returns {message_count} deduplicated messages with correct structure")
 
     def test_step6_duplicate_details_accessible(self, headers):
         """Verify we can get duplicate details for a deduplicated message."""
@@ -173,10 +176,10 @@ class TestFullDeduplicationPipeline:
 
         duplicates_count = len(details["duplicates"])
 
-        print(f"\nDuplicate details for message {message_id}:")
-        print(f"  Primary text: {details['primary_message']['text'][:80]}...")
-        print(f"  Duplicates found: {duplicates_count}")
-        print(f"  Group confidence: {details['group_confidence']}")
+        logger.info(f"\nDuplicate details for message {message_id}:")
+        logger.info(f"  Primary text: {details['primary_message']['text'][:80]}...")
+        logger.info(f"  Duplicates found: {duplicates_count}")
+        logger.info(f"  Group confidence: {details['group_confidence']}")
 
         # Verify duplicates exist
         assert duplicates_count > 0, \
@@ -189,21 +192,21 @@ class TestFullDeduplicationPipeline:
             assert dup["similarity_score"] > 0, \
                 "Duplicate should have similarity score > 0"
 
-        print(f"✅ SUCCESS: Duplicate details accessible with {duplicates_count} duplicates")
+        logger.info(f"✅ SUCCESS: Duplicate details accessible with {duplicates_count} duplicates")
 
     def test_full_pipeline_summary(self, headers):
         """Final validation: Print complete pipeline status."""
         stats = requests.get(f"{BASE_URL}/deduplication/stats", headers=headers).json()
 
-        print("\n" + "="*60)
-        print("COMPLETE PIPELINE VALIDATION SUMMARY")
-        print("="*60)
-        print(f"Total messages scraped: {stats['total_messages']}")
-        print(f"Messages with embeddings: {stats['messages_with_embeddings']}")
-        print(f"Duplicate groups found: {stats['dedupe_groups']}")
-        print(f"Messages deduplicated: {stats['deduplicated_messages']}")
-        print(f"Deduplication ratio: {stats['deduplication_ratio']:.2%}")
-        print("="*60)
+        logger.info("\n" + "="*60)
+        logger.info("COMPLETE PIPELINE VALIDATION SUMMARY")
+        logger.info("="*60)
+        logger.info(f"Total messages scraped: {stats['total_messages']}")
+        logger.info(f"Messages with embeddings: {stats['messages_with_embeddings']}")
+        logger.info(f"Duplicate groups found: {stats['dedupe_groups']}")
+        logger.info(f"Messages deduplicated: {stats['deduplicated_messages']}")
+        logger.info(f"Deduplication ratio: {stats['deduplication_ratio']:.2%}")
+        logger.info("="*60)
 
         # Final assertion: Everything should be > 0
         assert stats['total_messages'] > 0, "No messages scraped"
@@ -211,7 +214,7 @@ class TestFullDeduplicationPipeline:
         assert stats['dedupe_groups'] > 0, "No deduplication performed"
         assert stats['deduplicated_messages'] > 0, "No duplicates found"
 
-        print("\n✅✅✅ FULL PIPELINE WORKING - APP DOES WHAT IT'S SUPPOSED TO DO! ✅✅✅\n")
+        logger.info("\n✅✅✅ FULL PIPELINE WORKING - APP DOES WHAT IT'S SUPPOSED TO DO! ✅✅✅\n")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,8 @@
 """Telegram client service for authentication and channel scraping."""
 
-import asyncio
-import os
-from datetime import datetime
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
 import structlog
 from telethon import TelegramClient
@@ -20,6 +18,8 @@ from telethon.errors import (
 )
 from telethon.tl.types import (
     Channel as TelegramChannel,
+)
+from telethon.tl.types import (
     Message,
     MessageMediaDocument,
     MessageMediaPhoto,

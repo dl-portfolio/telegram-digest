@@ -5,7 +5,7 @@ import uuid
 from arq.connections import ArqRedis, RedisSettings, create_pool
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlmodel import Session, func, select
+from sqlmodel import Session, col, func, select
 
 from app.api.deps import CurrentUser, get_db
 from app.core.config import settings
@@ -255,7 +255,7 @@ async def trigger_scrape_all(
     channels = session.exec(
         select(Channel).where(
             Channel.user_id == current_user.id,
-            Channel.is_active == True,
+            col(Channel.is_active).is_(True),
         )
     ).all()
 
