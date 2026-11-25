@@ -4,31 +4,27 @@
 
 Telegram Digest collects messages from a small set of Telegram channels, embeds them with OpenAI and groups messages that say the same thing, so a story posted several times (or reworded across channels) is read once.
 
-It was planned as a single application covering collection, deduplication, analysis and reporting. Collection (Epic 1) and semantic deduplication (Epic 2) were built and validated; LLM analysis (Epic 3) and a reporting / content-planning interface (Epic 4) stayed in the backlog.
-
-## Successor: telegram-scraper-api
-
-This repository is the predecessor of **[dl-portfolio/telegram-scraper-api](https://github.com/dl-portfolio/telegram-scraper-api)**. In this monolith, collection was coupled to everything downstream of it, so the scraper could not be tested, run or reused on its own. The collection layer was therefore extracted into a separate service with a simple contract (channel and timeframe in, JSON out). This repository is kept as the original end-to-end version of the idea.
+It was planned as a single application covering collection, deduplication, analysis and reporting. Collection and semantic deduplication were built and validated; LLM analysis and a reporting / content-planning interface stayed in the backlog.
 
 ---
 
 ## Features
 
-### Epic 1: Channel management and collection (completed)
+### Channel management and collection
 - Manage up to 3 Telegram channels per user via the API (create, list, update, delete; duplicates rejected)
 - Log in to Telegram once through the API; the Telethon session is stored in `telegram_sessions/` (git-ignored)
 - Scrape messages with metadata (views, forwards, author, timestamps), on demand or hourly via an ARQ cron job
 - Incremental scraping (only messages newer than the last one stored) and flood-wait handling
 
-### Epic 2: Semantic deduplication (completed)
+### Semantic deduplication
 - Embeddings with OpenAI `text-embedding-3-small` at 768 dimensions, stored in a pgvector column with an HNSW (cosine) index
 - A deduplication job groups messages whose cosine similarity reaches a configurable threshold (default 0.85), with a small boost for messages posted within 6 hours of each other
 - Each group records a primary message (highest view count), per-message similarity scores and a group confidence score
 - Validated on real data: 195 messages from 2 public channels, 167 embeddings, 5 duplicate groups at a 0.70 threshold (see [docs/VALIDATION-SUMMARY.md](docs/VALIDATION-SUMMARY.md))
 
 ### Not built (backlog)
-- **Epic 3:** LLM insight generation ("What happened" / "Why it matters")
-- **Epic 4:** content-planning interface
+- LLM insight generation ("What happened" / "Why it matters")
+- Content-planning interface
 
 ---
 
